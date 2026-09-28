@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="基于个人知识库与 DeepSeek 的美国医学院申请助手">
+  <title>MedPath · 美国医学院申请助手</title>
+  <link rel="stylesheet" href="/styles.css?v=20260614-2">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">M</div>
+        <div><strong>MedPath</strong><span>申请工作台</span></div>
+      </div>
+
+      <nav class="nav" aria-label="主要导航">
+        <button class="nav-item active" data-view="chat">
+          <span class="nav-icon">✦</span><span>申请咨询</span>
+        </button>
+        <button class="nav-item" data-view="knowledge">
+          <span class="nav-icon">▤</span><span>知识库</span><span class="nav-count" id="docCount">0</span>
+        </button>
+        <button class="nav-item" data-view="tools">
+          <span class="nav-icon">⌘</span><span>工具箱</span><span class="nav-count">6</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-spacer"></div>
+      <button class="api-status" id="openSettings">
+        <span class="status-dot" id="apiDot"></span>
+        <span><strong>DeepSeek API</strong><small id="apiStatusText">尚未配置</small></span>
+        <span class="chevron">›</span>
+      </button>
+      <div class="privacy-note">API Key 仅保存在当前浏览器</div>
+    </aside>
+
+    <main class="main">
+      <section class="view active" id="chatView">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">ADMISSIONS COPILOT</p>
+            <h1>美国医学院申请助手</h1>
+          </div>
+          <button class="icon-button" id="newChat" title="新建对话" aria-label="新建对话">＋</button>
+        </header>
+
+        <div class="chat-stage" id="chatStage">
+          <div class="welcome" id="welcome">
+            <div class="welcome-symbol">✦</div>
+            <h2>从材料梳理到申请决策</h2>
+            <p>优先检索你上传的资料；知识库不足时，可由 DeepSeek 提供补充分析。</p>
+            <div class="suggestions">
+              <button class="suggestion"><span>01</span>梳理 AMCAS 申请时间线</button>
+              <button class="suggestion"><span>02</span>比较 MD 与 DO 项目差异</button>
+              <button class="suggestion"><span>03</span>评估我的选校策略</button>
+              <button class="suggestion"><span>04</span>计算我的 BCPM GPA</button>
+            </div>
+          </div>
+          <div class="messages" id="messages" aria-live="polite"></div>
+        </div>
+
+        <div class="composer-wrap">
+          <div class="mode-row">
+            <div class="segmented" aria-label="回答模式">
+              <button class="mode active" data-mode="auto">智能</button>
+              <button class="mode" data-mode="knowledge">仅知识库</button>
+              <button class="mode" data-mode="deepseek">DeepSeek</button>
+            </div>
+            <span class="retrieval-state"><i></i>知识库优先</span>
+          </div>
+          <form class="composer" id="chatForm">
+            <textarea id="question" rows="1" placeholder="询问选校、材料、时间线或面试准备…" aria-label="输入问题"></textarea>
+            <button class="send-button" id="sendButton" type="submit" title="发送" aria-label="发送">↑</button>
+          </form>
+          <p class="disclaimer">申请政策可能变化，重要信息请以 AAMC、AACOMAS 及院校官网为准。</p>
+        </div>
+      </section>
+
+      <section class="view" id="knowledgeView">
+        <header class="topbar knowledge-header">
+          <div>
+            <p class="eyebrow">PERSONAL KNOWLEDGE BASE</p>
+            <h1>申请知识库</h1>
+            <p class="subheading">上传院校要求、申请指南、个人笔记和选校资料。</p>
+          </div>
+          <button class="primary-button" id="uploadButton">＋ 添加文档</button>
+          <input type="file" id="fileInput" multiple accept=".pdf,.txt,.md,.csv,.json" hidden>
+        </header>
+        <div class="knowledge-content">
+          <div class="upload-zone" id="uploadZone">
+            <div class="upload-icon">⇧</div>
+            <div><strong>拖放文件到这里</strong><span>支持 PDF、TXT、Markdown、CSV、JSON，单次不超过 20 MB</span></div>
+            <button class="secondary-button" id="browseButton">选择文件</button>
+          </div>
+          <div class="section-title">
+            <div><h2>已收录文档</h2><p id="docSummary">尚未添加资料</p></div>
+            <button class="icon-button small" id="refreshDocs" title="刷新" aria-label="刷新">↻</button>
+          </div>
+          <div class="document-list" id="documentList"></div>
+        </div>
+      </section>
+
+      <section class="view" id="toolsView">
+        <header class="topbar knowledge-header">
+          <div>
+            <p class="eyebrow">AGENT TOOLKIT</p>
+            <h1>申请工具箱</h1>
+            <p class="subheading">由 DeepSeek 自动选择工具，本地代码负责检索、匹配和精确计算。</p>
+          </div>
+        </header>
+        <div class="tools-content">
+          <div id="toolDirectory">
+            <div class="tools-grid">
+              <article class="tool-card"><span class="tool-number">01</span><h2>官方来源检索</h2><p>定位 AAMC、AACOM、Choose DO、StudentAid 或院校官网信息，并保留链接。</p><button class="tool-action" data-tool="official_source_lookup">打开工具 <span>→</span></button></article>
+              <article class="tool-card"><span class="tool-number">02</span><h2>申请时间线</h2><p>根据目标入学年份、申请体系和 MCAT 日期生成任务窗口。</p><button class="tool-action" data-tool="build_application_timeline">打开工具 <span>→</span></button></article>
+              <article class="tool-card"><span class="tool-number">03</span><h2>院校比较</h2><p>比较你提供或知识库中的 GPA、MCAT、学费、州偏好和项目特点。</p><button class="tool-action" data-tool="compare_medical_schools">打开工具 <span>→</span></button></article>
+              <article class="tool-card"><span class="tool-number">04</span><h2>申请档案评估</h2><p>检查学术指标与经历信息是否完整，指出需要补充的证据。</p><button class="tool-action" data-tool="evaluate_applicant_profile">打开工具 <span>→</span></button></article>
+              <article class="tool-card"><span class="tool-number">05</span><h2>先修课匹配</h2><p>将课程与目标院校要求匹配，标出满足、缺失和需人工确认项。</p><button class="tool-action" data-tool="match_prerequisites">打开工具 <span>→</span></button></article>
+              <article class="tool-card"><span class="tool-number">06</span><h2>申请计算器</h2><p>计算 Overall/BCPM GPA 或申请费用，展示计算依据和忽略项。</p><button class="tool-action" data-tool="application_calculator">打开工具 <span>→</span></button></article>
+            </div>
+            <p class="tools-note">每个工具拥有独立对话和 Prompt。超出当前工具范围的问题会被拒绝。</p>
+          </div>
+          <div class="tool-workspace" id="toolWorkspace" hidden>
+            <div class="tool-workspace-header">
+              <button class="back-button" id="backToTools">← 工具箱</button>
+              <div><p class="eyebrow" id="activeToolEyebrow">DEDICATED TOOL</p><h2 id="activeToolTitle"></h2><p id="activeToolScope"></p></div>
+              <button class="icon-button small" id="clearToolChat" title="清空当前工具对话" aria-label="清空当前工具对话">↻</button>
+            </div>
+            <div class="tool-layout">
+              <div class="tool-conversation">
+                <div class="tool-messages" id="toolMessages" aria-live="polite"></div>
+                <form class="tool-composer" id="toolChatForm">
+                  <textarea id="toolQuestion" rows="2" placeholder="输入此工具范围内的问题…" aria-label="工具问题"></textarea>
+                  <button class="send-button" id="toolSendButton" type="submit" title="发送" aria-label="发送">↑</button>
+                </form>
+              </div>
+              <aside class="tool-prompt-panel">
+                <div class="prompt-panel-title"><strong>本工具 Prompt</strong><span id="toolPromptCount">0/2000</span></div>
+                <textarea id="toolCustomPrompt" rows="10" maxlength="2000" placeholder="例如：先列出缺失信息，再给出结构化结果；回答保持简洁。"></textarea>
+                <p>只影响当前工具的回答风格和流程，不能改变工具范围。</p>
+                <button class="secondary-button" id="saveToolPrompt" type="button">保存 Prompt</button>
+              </aside>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="settingsModal" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal-header">
+        <div><p class="eyebrow">MODEL CONNECTION</p><h2 id="settingsTitle">DeepSeek API 设置</h2></div>
+        <button class="icon-button small" id="closeSettings" aria-label="关闭">×</button>
+      </div>
+      <p class="modal-copy">知识库没有足够信息时，助手会调用 DeepSeek。模型不具备实时网页搜索能力，时效性内容仍需核对官方来源。</p>
+      <label class="field"><span>API Key</span><div class="input-with-action"><input id="apiKey" type="password" placeholder="sk-…" autocomplete="off"><button id="toggleKey" type="button">显示</button></div></label>
+      <label class="field"><span>模型</span><select id="model"><option value="deepseek-chat">deepseek-chat</option><option value="deepseek-reasoner">deepseek-reasoner</option></select></label>
+      <label class="field">
+        <span>自定义 Prompt（可选）</span>
+        <textarea id="customPrompt" rows="5" maxlength="2000" placeholder="例如：请先给出结论，再用表格比较院校；语气专业、简洁。"></textarea>
+        <small class="field-hint">作为 System Prompt 的补充指令。知识库内容和用户问题模板由系统固定，不可修改。<b id="promptCount">0/2000</b></small>
+      </label>
+      <div class="connection-result" id="connectionResult" hidden></div>
+      <div class="modal-actions"><button class="danger-text" id="clearKey">清除配置</button><div class="action-group"><button class="secondary-button" id="testConnection">测试连接</button><button class="primary-button" id="saveSettings">保存设置</button></div></div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="/app.js?v=20260614-2"></script>
+</body>
+</html>
